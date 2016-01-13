@@ -80,11 +80,20 @@ save(last.date,
      file=my.rda.file)
 
 # Compose the filename
-outFileName <- paste0( Sys.Date(), "_jobs.list.all.txt")
+outFileName.new.noext <- paste0( Sys.Date(), "_jobs.BIOCAT_list.new")
+outFileName.all.noext <- paste0( Sys.Date(), "_jobs.BIOCAT_list.all")
+outFileNames <- c(paste0(outFileName.new.noext, ".txt"),
+                  paste0(outFileName.all.noext, ".txt"))
+# Remove files of the same day if present
+for (filename in outFileNames) {
+  if (file.exists(filename)) {
+    file.remove(filename)
+  }
+}
 
 # Write results to disk
-write.table(jobs.new, outFileName, quote = FALSE, sep=" | ", row.names=TRUE)
-write.table(jobs.list.all, outFileName, quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
+write.table(jobs.list.all, paste0(outFileName.all.noext, ".txt"), quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
+write.table(jobs.new, paste0(outFileName.new.noext, ".txt"), quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
 
 # Send email with list of jobs and their urls
 #from <- sprintf("<sendmailR@%s>", Sys.info()[4])
@@ -92,7 +101,7 @@ from <- "xavier.depedro@vhir.org"
 to <- "xavier.depedro@vhir.org"
 #to <- "xdpedro@ir.vhebron.net"
   subject <- sprintf("[JOBS] BIOCAT: %s", Sys.Date()) 
-  body <- "It works! See attached file"
+  body <- "See the list of new jobs (since the last email) in the first attachment, and the full list of jobs in this website in the second attachment below."
   cc <- NULL 
   bcc <- NULL 
   headers <- NULL 
@@ -107,7 +116,8 @@ to <- "xavier.depedro@vhir.org"
 cat("\nSending the email confirming the job has been done... ")
 
 #key part for attachments, put the body and the mime_part in a list for msg
-attachmentPath <- file.path(getwd(), outFileName)
+attachmentPath.new <- file.path(getwd(), paste0(outFileName.new.noext, ".txt"))
+attachmentPath.all <- file.path(getwd(), paste0(outFileName.all.noext, ".txt"))
 #attachmentName <- outFileName
 #attachmentObject <- mime_part(x=attachmentPath,name=attachmentName)
 #bodyWithAttachment <- list(body,attachmentObject)
@@ -119,11 +129,12 @@ attachmentPath <- file.path(getwd(), outFileName)
 #bodyWithAttachment <- list(body,attachmentObject,attachmentObject2)
 
 command <- paste("sendEmail -f ", from, " -t ", to, " -u \"", subject,
-                 "\" -m \"", body, "\" -s ", smtp, " -a \"", attachmentPath,
-                 "\" >> \"", attachmentPath, "\" ", " -o tls=no -o message-charset=utf-8 ", sep="");
+                 "\" -m \"", body, "\" -s ", smtp,
+                 " -a \"", attachmentPath.new, "\" -a \"", attachmentPath.all,
+                 "\" >> \"", attachmentPath.all, "\" ", " -o tls=no -o message-charset=utf-8 ", sep="");
 system(command);
 
-cat("\nEmail sent.\n ")  
+cat("\nEmail sent.\n ")   
 
 # Call through the command line with:
 #

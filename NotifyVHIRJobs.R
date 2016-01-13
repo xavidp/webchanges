@@ -146,7 +146,7 @@ for (filename in outFileNames) {
 
 # Write results to disk
 write.table(jobs.list.all, paste0(outFileName.all.noext, ".txt"), quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
-HTML(jobs.list.all, paste0(outFileName.all.noext, ".html"), encoding = "utf-8")
+#HTML(jobs.list.all, paste0(outFileName.all.noext, ".html"), encoding = "utf-8")
 
 #------------------------
 
@@ -156,7 +156,7 @@ if (dim(jobs.new)[1] > 0) {
   # ------------------------
   #jobs.new <- data.table(jobs.list.all[1:4,])
   pdf.links <- as.character(jobs.new$link.pdf)
-  pdfs.folder <- "PDF"
+  pdfs.folder <- "PDF.VHIR"
   if (!dir.exists(pdfs.folder)) {
     dir.create(pdfs.folder)
   }
@@ -175,7 +175,7 @@ if (dim(jobs.new)[1] > 0) {
   # Write results to disk
   write.table(jobs.new[,1:5], paste0(outFileName.new.noext, ".txt"), quote = FALSE, sep=" | ", row.names=TRUE)
   write.table(jobs.new, paste0(outFileName.new.noext, ".txt"), quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
-  HTML(jobs.new, paste0(outFileName.new.noext, ".html"))
+#  HTML(jobs.new, paste0(outFileName.new.noext, ".html"))
   
   # compose the email
   # -----------------
@@ -184,7 +184,7 @@ if (dim(jobs.new)[1] > 0) {
   to <- "xavier.depedro@vhir.org"
   #to <- "xdpedro@ir.vhebron.net"
   subject <- sprintf("[JOBS] VHIR: %s", Sys.Date()) 
-  body <- "It works! See attached file"
+  body <- "See the list of new jobs (since the last email) in the first attachment, and the full list of jobs in this website in the second attachment below."
   cc <- NULL 
   bcc <- NULL 
   headers <- NULL 
