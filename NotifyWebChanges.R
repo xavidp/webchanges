@@ -79,6 +79,12 @@ save(last.date,
      jobs.new,
      file=my.rda.file)
 
+# Create folder if missing
+folder.txts <- "TXT.BIOCAT"
+if (!dir.exists(folder.txts)) {
+  dir.create(folder.txts)
+}
+
 # Compose the filename
 outFileName.new.noext <- paste0( Sys.Date(), "_jobs.BIOCAT_list.new")
 outFileName.all.noext <- paste0( Sys.Date(), "_jobs.BIOCAT_list.all")
@@ -86,14 +92,14 @@ outFileNames <- c(paste0(outFileName.new.noext, ".txt"),
                   paste0(outFileName.all.noext, ".txt"))
 # Remove files of the same day if present
 for (filename in outFileNames) {
-  if (file.exists(filename)) {
-    file.remove(filename)
+  if (file.exists(file.path(folder.txts, filename))) {
+    file.remove(file.path(folder.txts, filename))
   }
 }
 
 # Write results to disk
-write.table(jobs.list.all, paste0(outFileName.all.noext, ".txt"), quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
-write.table(jobs.new, paste0(outFileName.new.noext, ".txt"), quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
+write.table(jobs.list.all, file.path(folder.txts, paste0(outFileName.all.noext, ".txt")), quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
+write.table(jobs.new, file.path(folder.txts, paste0(outFileName.new.noext, ".txt")), quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
 
 # Send email with list of jobs and their urls
 #from <- sprintf("<sendmailR@%s>", Sys.info()[4])
@@ -116,8 +122,8 @@ to <- "xavier.depedro@vhir.org"
 cat("\nSending the email confirming the job has been done... ")
 
 #key part for attachments, put the body and the mime_part in a list for msg
-attachmentPath.new <- file.path(getwd(), paste0(outFileName.new.noext, ".txt"))
-attachmentPath.all <- file.path(getwd(), paste0(outFileName.all.noext, ".txt"))
+attachmentPath.new <- file.path(getwd(), folder.txts, paste0(outFileName.new.noext, ".txt"))
+attachmentPath.all <- file.path(getwd(), folder.txts, paste0(outFileName.all.noext, ".txt"))
 #attachmentName <- outFileName
 #attachmentObject <- mime_part(x=attachmentPath,name=attachmentName)
 #bodyWithAttachment <- list(body,attachmentObject)

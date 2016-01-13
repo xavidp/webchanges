@@ -130,6 +130,12 @@ if (length(all.equal(df1, df2))>0 && length(df1) != 1) {
 #------------------------
 # Store also that job list on disk
 #------------------------
+# Create folder if missing
+folder.txts <- "TXT.VHIR"
+if (!dir.exists(folder.txts)) {
+  dir.create(folder.txts)
+}
+
 # Compose the filenames
 outFileName.new.noext <- paste0( Sys.Date(), "_jobs.VHIR_list.new")
 outFileName.all.noext <- paste0( Sys.Date(), "_jobs.VHIR_list.all")
@@ -139,13 +145,13 @@ outFileNames <- c(paste0(outFileName.new.noext, ".txt"),
                   paste0(outFileName.all.noext, ".html"))
 # Remove files of the same day if present
 for (filename in outFileNames) {
-  if (file.exists(filename)) {
-    file.remove(filename)
+  if (file.exists(file.path(folder.txts, filename))) {
+    file.remove(file.path(folder.txts, filename))
   }
 }
 
 # Write results to disk
-write.table(jobs.list.all, paste0(outFileName.all.noext, ".txt"), quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
+write.table(jobs.list.all, file.path(folder.txts, paste0(outFileName.all.noext, ".txt")), quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
 #HTML(jobs.list.all, paste0(outFileName.all.noext, ".html"), encoding = "utf-8")
 
 #------------------------
@@ -156,9 +162,9 @@ if (dim(jobs.new)[1] > 0) {
   # ------------------------
   #jobs.new <- data.table(jobs.list.all[1:4,])
   pdf.links <- as.character(jobs.new$link.pdf)
-  pdfs.folder <- "PDF.VHIR"
-  if (!dir.exists(pdfs.folder)) {
-    dir.create(pdfs.folder)
+  folder.pdfs <- "PDF.VHIR"
+  if (!dir.exists(folder.pdfs)) {
+    dir.create(folder.pdfs)
   }
   
   jobs.new <- data.frame(jobs.new)
@@ -166,15 +172,16 @@ if (dim(jobs.new)[1] > 0) {
   
   for (n.pdf in 1:length(pdf.links)) {
     pdf.filename <- unlist(str_split(pdf.links[n.pdf], "\\\\", n=5))[5]
-    download.file(pdf.links[n.pdf], file.path(pdfs.folder, pdf.filename), method="wget", quiet = FALSE, mode = "w",
+    download.file(pdf.links[n.pdf], file.path(folder.pdfs, pdf.filename), method="wget", quiet = FALSE, mode = "w",
                  cacheOK = TRUE, extra = getOption("download.file.extra"))
     # Once pdf's are downloaded, get rid of everything which is not the filename that was stored on disk  
     jobs.new[n.pdf, "link.pdf"] <- pdf.filename
   }
   
   # Write results to disk
-  write.table(jobs.new[,1:5], paste0(outFileName.new.noext, ".txt"), quote = FALSE, sep=" | ", row.names=TRUE)
-  write.table(jobs.new, paste0(outFileName.new.noext, ".txt"), quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
+  write.table(jobs.new[,1:4], file.path(folder.txts, paste0(outFileName.new.noext, ".txt")), quote = FALSE, sep=" | ", row.names=TRUE)
+  write.table("\n", file.path(folder.txts, paste0(outFileName.new.noext, ".txt")), quote = FALSE, sep="", row.names=FALSE, col.names=FALSE, append=TRUE)
+  write.table(jobs.new[,5:6], file.path(folder.txts, paste0(outFileName.new.noext, ".txt")), quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
 #  HTML(jobs.new, paste0(outFileName.new.noext, ".html"))
   
   # compose the email
@@ -199,8 +206,8 @@ if (dim(jobs.new)[1] > 0) {
   cat("\nSending the email confirming the job has been done... ")
   
   #key part for attachments, put the body and the mime_part in a list for msg
-  attachmentPath.new <- file.path(getwd(), paste0(outFileName.new.noext, ".txt"))
-  attachmentPath.all <- file.path(getwd(), paste0(outFileName.all.noext, ".txt"))
+  attachmentPath.new <- file.path(getwd(), folder.txts, paste0(outFileName.new.noext, ".txt"))
+  attachmentPath.all <- file.path(getwd(), folder.txts, paste0(outFileName.all.noext, ".txt"))
   #attachmentName <- outFileName
   #attachmentObject <- mime_part(x=attachmentPath,name=attachmentName)
   #bodyWithAttachment <- list(body,attachmentObject)
