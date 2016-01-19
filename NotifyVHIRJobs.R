@@ -2,13 +2,16 @@
 # author: "Xavier de Pedro"
 # date: "09/01/2016"
 
-#install.packages(c("rvest", "dplyr", "sendmailR", "stringr", "magrittr", "R2HTML"))
+# system.packages: sudo apt-get install libv8-dev
+#install.packages(c("rvest", "dplyr", "sendmailR", "stringr", "magrittr", "R2HTML", "daff")
 setwd("/home/xavi/code/NotifyWebChanges")
 #setwd("/home/xavi/Dropbox/00-ueb-xavi-comu/2016_Notify_VHIR_JOBS")
+# See also http://www.r-bloggers.com/identifying-records-in-data-frame-a-that-are-not-contained-in-data-frame-b-%E2%80%93-a-comparison/
 require(methods)
 require(rvest)
 require(dplyr)
 require(R2HTML)
+require(daff)
 # To pick out an element at specified position, use magrittr::extract2
 # which is an alias for [[
 require(magrittr)
@@ -26,8 +29,8 @@ url_base <- "http://www.vhir.org/portal1/search-ofertes_treball.asp?s=institut&c
 webpage <- list()
 if (exists("jobs.list")) rm(jobs.list); jobs.list <- list()
 if (exists("jobs.links")) rm(jobs.links); jobs.links <- list()
-if (exists("jobs.links.pdf")) rm(jobs.links.pdf); jobs.links.pdf <- list()
 if (exists("jobs.status")) rm(jobs.status); jobs.status <- list()
+
 # There use to be 6 pages of job links, but just in case, I set this loop until 10, 
 # in case we have many more offers in the future
 for (ii in 1:10) {
@@ -54,37 +57,50 @@ for (ii in 1:10) {
       html_attr("href")
     jobs.links[[ii]] <- paste0("http://www.vhir.org/portal1/", jobs.links[[ii]])
     # html_table() 
-    
+
+    # This jobs.links.pdf is the list of pdf links for this ii page, not for all pages as in jobs.list
+    jobs.links.pdf <- NULL
     # Fetch also the url of the pdf itself, for furhter downloading of that pdf file to disk
     for (nn in 1:length(jobs.links[[ii]])) {
 #for (nn in 1:dim(jobs.list.all.previous)[1]) {
 #  jobs.links.pdf[[nn]] <- read_html(as.character(jobs.list.all.previous$link[nn]))
   
-      jobs.links.pdf[[nn]] <- read_html(jobs.links[[ii]][nn])
-      tmp.links <- jobs.links.pdf[[nn]] %>%
+      tmp <- read_html(jobs.links[[ii]][nn])
+      tmp.links <- tmp %>%
         html_nodes("section") %>%
         .[[1]] %>%
         html_nodes("a") %>% 
         html_attr("href") 
       
       tmp.pdf.link <- tmp.links %>% extract2(length(tmp.links))
-      jobs.links.pdf[[nn]]  <-  paste0("http://www.vhir.org", tmp.pdf.link)   
+      jobs.links.pdf[nn]  <-  paste0("http://www.vhir.org", tmp.pdf.link)   
     }
 # jobs.list.all.previous2 <- cbind(data.frame(jobs.list.all.previous), unlist(jobs.links.pdf))
 # colnames(jobs.list.all.previous2) <- c("Status", "DateOpen", "DateClosed", "JobName", "link.html", "link.pdf")
 # jobs.list.all.previous <- jobs.list.all.previous2
 # write.table(jobs.list.all.previous, "2016-01-11_jobs.VHIR_list.all.txt", quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
 # jobs.list.all <- jobs.list.all.previous
-    jobs.links[[ii]] <- cbind(unlist(jobs.links.pdf), data.frame(jobs.links[[ii]]))
+    jobs.links[[ii]] <- cbind(jobs.links.pdf, data.frame(jobs.links[[ii]]))
     jobs.status[[ii]] <- jobs.list[[ii]] %>% html_nodes("img") %>% html_attr("src")
     jobs.status[[ii]] <- gsub("images/admin/check.png", "open", jobs.status[[ii]], fixed=TRUE)
     jobs.status[[ii]] <- gsub("images/admin/closed.png", "closed", jobs.status[[ii]], fixed=TRUE)
     
     jobs.list[[ii]] <- jobs.list[[ii]] %>% html_text() 
     require(stringr)
-    jobs.list[[ii]] <- str_split_fixed(jobs.list[[ii]], "\t", 20)[,c(7,13,18)]
-    jobs.list[[ii]] <- gsub("\r\n", "", x=jobs.list[[ii]], fixed=TRUE)
-    jobs.list[[ii]] <- data.frame(jobs.list[[ii]])
+    jobs.list[[ii]] <- str_split(jobs.list[[ii]], "\t")
+    if (exists("tmp.job")) rm(tmp.job); tmp.job <- list()
+    for (nn in 1:length(jobs.list[[ii]])) {
+        tmp.job.data <- jobs.list[[ii]][[nn]][c(7,13)]
+        tmp.job.name <- jobs.list[[ii]][[nn]][18:length(jobs.list[[ii]][[nn]])]
+        tmp.job.name <- paste0(tmp.job.name, collapse="")
+        tmp.job[[nn]] <- c(tmp.job.data, tmp.job.name)
+        tmp.job[[nn]] <- gsub("\r\n", "", x=tmp.job[[nn]], fixed=TRUE)
+        tmp.job[[nn]] <- t(tmp.job[[nn]])
+    }
+    # Convert the tmp.job object from list to data.frame again
+    tmp.job <- do.call(rbind.data.frame, tmp.job)
+    #jobs.list[[ii]] <- str_split(jobs.list[[ii]], "\t")
+    #jobs.list[[ii]] <- data.frame(jobs.list[[ii]])
     # %>% repair_encoding() 
     # %>% guess_encoding()
     
@@ -102,15 +118,44 @@ for (ii in 1:10) {
     #       html_nodes("a") %>%  html_attr("href")
     
     # Merge the two data tables
-    jobs.list[[ii]] <- cbind(jobs.status[[ii]], jobs.list[[ii]], jobs.links[[ii]])
-    jobs.list[[ii]] <- data.frame(jobs.list[[ii]])
+    jobs.list[[ii]] <- cbind(jobs.status[[ii]], tmp.job, jobs.links[[ii]])
     colnames(jobs.list[[ii]])<- c("Status", "DateOpen", "DateClosed", "JobName", "link.pdf", "link.html")
     
   }
   
 }
 
+#---------
+# Prepare folders and file names
+#---------
+# Create folder if missing
+folder.txts <- "TXT.VHIR"
+if (!dir.exists(folder.txts)) {
+  dir.create(folder.txts)
+}
+
+# Compose the filenames
+outFileName.new.noext <- paste0( Sys.Date(), "_jobs.VHIR_list.new")
+outFileName.changed.noext <- paste0( Sys.Date(), "_jobs.VHIR_list.changed")
+outFileName.all.noext <- paste0( Sys.Date(), "_jobs.VHIR_list.all")
+outFileNames <- c(paste0(outFileName.new.noext, ".txt"),
+                  paste0(outFileName.new.noext, ".html"),
+                  paste0(outFileName.changed.noext, ".txt"),
+                  paste0(outFileName.changed.noext, ".html"),
+                  paste0(outFileName.all.noext, ".txt"),
+                  paste0(outFileName.all.noext, ".html"))
+# Remove files of the same day if present
+for (filename in outFileNames) {
+  if (file.exists(file.path(folder.txts, filename))) {
+    file.remove(file.path(folder.txts, filename))
+  }
+}
+#---------
+
+
+#---------
 # Get the differences with the previous job list
+#---------
 require(data.table)
 last.date <- format(Sys.time(), "%Y-%M-%d %X"); 
 jobs.list.all <- rbindlist(jobs.list)
@@ -121,36 +166,35 @@ df2 <- data.frame(jobs.list.all)
 df2$link.pdf <- as.character(df2$link.pdf)
 head(df1); str(df1)
 head(df2); str(df2)
+#any(duplicated(df1))
+#any(duplicated(df2))
 if (length(all.equal(df1, df2))>0 && length(df1) != 1) {
   # do something, like merging the A and B into AB, and removing B from AB, or similar
-  jobs.new <- dplyr::setdiff(df2, df1)
-  jobs.new <- data.table(jobs.new)
+  # See http://www.rstudio.com/wp-content/uploads/2015/02/data-wrangling-cheatsheet.pdf
+  #jobs.new <- dplyr::anti_join(df2, df1, by="links.pdf")
+  jobs.changed <- diff_data(df1,df2) 
+  write_diff(jobs.changed, file = file.path(folder.txts, paste0(outFileName.changed.noext, ".csv")))
+  render_diff(jobs.changed, file = file.path(folder.txts, paste0(outFileName.changed.noext, ".html")))
+  
+  # Try again with dplyr::setdiff
+  #df1 <- apply(df1, 2, as.character)
+  #df2 <- apply(df2, 2, as.character)
+  #jobs.new <- dplyr::setdiff(df2, df1)
+  #jobs.new <- data.table(jobs.new)
+  
+  #Read the full list of changes into a df, and get a subset of the additions
+  jobs.changed.df <- fread( file.path(folder.txts, paste0(outFileName.changed.noext, ".csv")),
+                            data.table = FALSE)
+  colnames(jobs.changed.df)[1] <- "Type"
+  jobs.new <- subset(jobs.changed.df, Type == "+++")[-1]
+  
 }
 
 #------------------------
 # Store also that job list on disk
 #------------------------
-# Create folder if missing
-folder.txts <- "TXT.VHIR"
-if (!dir.exists(folder.txts)) {
-  dir.create(folder.txts)
-}
-
-# Compose the filenames
-outFileName.new.noext <- paste0( Sys.Date(), "_jobs.VHIR_list.new")
-outFileName.all.noext <- paste0( Sys.Date(), "_jobs.VHIR_list.all")
-outFileNames <- c(paste0(outFileName.new.noext, ".txt"),
-                  paste0(outFileName.new.noext, ".html"),
-                  paste0(outFileName.all.noext, ".txt"),
-                  paste0(outFileName.all.noext, ".html"))
-# Remove files of the same day if present
-for (filename in outFileNames) {
-  if (file.exists(file.path(folder.txts, filename))) {
-    file.remove(file.path(folder.txts, filename))
-  }
-}
-
 # Write results to disk
+write.table(jobs.changed.df, file.path(folder.txts, paste0(outFileName.changed.noext, ".txt")), quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
 write.table(jobs.list.all, file.path(folder.txts, paste0(outFileName.all.noext, ".txt")), quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
 #HTML(jobs.list.all, paste0(outFileName.all.noext, ".html"), encoding = "utf-8")
 
@@ -188,12 +232,12 @@ if (dim(jobs.new)[1] > 0) {
   # -----------------
   #from <- sprintf("<sendmailR@%s>", Sys.info()[4])
   from <- "xavier.depedro@vhir.org"
-  to <- "xavier.depedro@vhir.org"
+  to <- "ce.ofertes.treball@vhir.org"
   #to <- "xdpedro@ir.vhebron.net"
   subject <- sprintf("[JOBS] VHIR: %s", Sys.Date()) 
-  body <- "See the list of new jobs (since the last email) in the first attachment, and the full list of jobs in this website in the second attachment below."
+  body <- "See the list of new jobs (since the last email) in the first attachment, the list of changes in the colored html table in the second, and the full list of jobs in this website in plain text in the last attachment below."
   cc <- NULL 
-  bcc <- NULL 
+  bcc <- "xavier.depedro@vhir.org" 
   headers <- NULL 
   smtp <- "smtp.ir.vhebron.net"
 
@@ -207,6 +251,7 @@ if (dim(jobs.new)[1] > 0) {
   
   #key part for attachments, put the body and the mime_part in a list for msg
   attachmentPath.new <- file.path(getwd(), folder.txts, paste0(outFileName.new.noext, ".txt"))
+  attachmentPath.changed <- file.path(getwd(), folder.txts, paste0(outFileName.changed.noext, ".html"))
   attachmentPath.all <- file.path(getwd(), folder.txts, paste0(outFileName.all.noext, ".txt"))
   #attachmentName <- outFileName
   #attachmentObject <- mime_part(x=attachmentPath,name=attachmentName)
@@ -221,7 +266,7 @@ if (dim(jobs.new)[1] > 0) {
   
   command <- paste("sendEmail -f ", from, " -t ", to, " -u \"", subject,
                    "\" -m \"", body, "\" -s ", smtp,
-                   " -a \"", attachmentPath.new, "\" -a \"", attachmentPath.all,
+                   " -a \"", attachmentPath.new, "\" -a \"", attachmentPath.changed, "\" -a \"", attachmentPath.all,
                    "\" >> \"", attachmentPath.all, "\" ", " -o tls=no -o message-charset=utf-8 ", sep="");
   system(command);
   
