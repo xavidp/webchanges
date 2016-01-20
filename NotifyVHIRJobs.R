@@ -201,11 +201,14 @@ write.table(jobs.list.all, file.path(folder.txts, paste0(outFileName.all.noext, 
 #------------------------
 
 # Last, download pdf files and compose the message and send it if there are new jobs found
-if (dim(jobs.new)[1] > 0) {
-  # Fetch pdf from new files
+if (dim(jobs.changed.df)[1] > 0) {
+  # Fetch pdf from changed files
   # ------------------------
+  # Clean the data frame of changed jobs so that there are no rows with "..."
+  jobs.changed.df.clean <- base::subset(jobs.changed.df, Type != "")
+  jobs.changed.df.clean <- base::subset(jobs.changed.df.clean, Type != "..." )
   #jobs.new <- data.table(jobs.list.all[1:4,])
-  pdf.links <- as.character(jobs.new$link.pdf)
+  pdf.links <- as.character(jobs.changed.df.clean$link.pdf)
   folder.pdfs <- "PDF.VHIR"
   if (!dir.exists(folder.pdfs)) {
     dir.create(folder.pdfs)
@@ -213,19 +216,19 @@ if (dim(jobs.new)[1] > 0) {
   
   jobs.new <- data.frame(jobs.new)
   jobs.new[] <- lapply(jobs.new, as.character)
+  jobs.changed.df.clean <- data.frame(jobs.changed.df.clean)
+  jobs.changed.df.clean[] <- lapply(jobs.changed.df.clean, as.character)
   
   for (n.pdf in 1:length(pdf.links)) {
     pdf.filename <- unlist(str_split(pdf.links[n.pdf], "\\\\", n=5))[5]
     download.file(pdf.links[n.pdf], file.path(folder.pdfs, pdf.filename), method="wget", quiet = FALSE, mode = "w",
                  cacheOK = TRUE, extra = getOption("download.file.extra"))
     # Once pdf's are downloaded, get rid of everything which is not the filename that was stored on disk  
-    jobs.new[n.pdf, "link.pdf"] <- pdf.filename
+    jobs.changed.df.clean[n.pdf, "link.pdf"] <- pdf.filename
   }
   
   # Write results to disk
-  write.table(jobs.new[,1:4], file.path(folder.txts, paste0(outFileName.new.noext, ".txt")), quote = FALSE, sep=" | ", row.names=TRUE)
-  write.table("\n", file.path(folder.txts, paste0(outFileName.new.noext, ".txt")), quote = FALSE, sep="", row.names=FALSE, col.names=FALSE, append=TRUE)
-  write.table(jobs.new[,5:6], file.path(folder.txts, paste0(outFileName.new.noext, ".txt")), quote = FALSE, sep=" | ", row.names=TRUE, append=TRUE)
+  write.table(jobs.new, file.path(folder.txts, paste0(outFileName.new.noext, ".txt")), quote = FALSE, sep=" | ", row.names=TRUE)
 #  HTML(jobs.new, paste0(outFileName.new.noext, ".html"))
   
   # compose the email
@@ -276,6 +279,7 @@ if (dim(jobs.new)[1] > 0) {
 
 # Save Rda to disk
 save(last.date,
+     jobs.changed.df,
      jobs.new,
      jobs.list.all,
      file=my.rda.file)
