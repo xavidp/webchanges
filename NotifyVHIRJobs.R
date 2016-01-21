@@ -288,9 +288,9 @@ save(last.date,
 
 # Call through the command line with:
 #
-# Rscript "/home/xavi/code/NotifyWebChanges/NotifyWebChanges.R"
+# Rscript "/home/xavi/code/webchanges/NotifyVHIRJobs.R"
 #
 # or 
 #
-# R CMD BATCH "/home/xavi/code/NotifyWebChanges/NotifyWebChanges.R"
+# R CMD BATCH "/home/xavi/code/webchanges/NotifyVHIRJobs.R"
 # cat NotifyWebChanges.Rout

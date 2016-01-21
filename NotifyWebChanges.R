@@ -2,8 +2,9 @@
 # author: "Xavier de Pedro"
 # date: "04/01/2016"
 
+# system.packages: sudo apt-get install sendemail
 #install.packages(c("rvest", "dplyr", "sendmailR")
-setwd("/home/xavi/code/NotifyWebChanges")
+setwd(".")
 require(methods)
 require(rvest)
 my.rda.file <- "last.biocat.jobs.Rda"
@@ -158,4 +159,4 @@ cat("\nEmail sent.\n ")
 ## Content to add (something like this for days from Mon to Friday at 2 p.m.):
 #
 ## m h  dom mon dow   command
-#0 14 * * 1,2,3,4,5  R CMD BATCH "/home/xavi/code/NotifyWebChanges/NotifyWebChanges.R"
+#0 14 * * 1,2,3,4,5  R CMD BATCH "/home/xavi/code/webchanges/NotifyWebChanges.R"
