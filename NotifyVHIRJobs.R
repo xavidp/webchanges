@@ -2,9 +2,9 @@
 # author: "Xavier de Pedro"
 # date: "09/01/2016"
 
-# system.packages: sudo apt-get install libv8-dev
+# system.packages: sudo apt-get install libv8-dev sendemail
 #install.packages(c("rvest", "dplyr", "sendmailR", "stringr", "magrittr", "R2HTML", "daff")
-setwd("/home/xavi/code/NotifyWebChanges")
+setwd(".")
 #setwd("/home/xavi/Dropbox/00-ueb-xavi-comu/2016_Notify_VHIR_JOBS")
 # See also http://www.r-bloggers.com/identifying-records-in-data-frame-a-that-are-not-contained-in-data-frame-b-%E2%80%93-a-comparison/
 require(methods)
