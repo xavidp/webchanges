@@ -188,6 +188,8 @@ if (length(all.equal(df1, df2))>0 && length(df1) != 1) {
   colnames(jobs.changed.df)[1] <- "Type"
   jobs.new <- subset(jobs.changed.df, Type == "+++")[-1]
   
+} else {
+  jobs.changed.df <- NULL
 }
 
 #------------------------
