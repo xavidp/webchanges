@@ -293,4 +293,14 @@ save(last.date,
 # or 
 #
 # R CMD BATCH "/home/xavi/code/webchanges/NotifyVHIRJobs.R"
-# cat NotifyWebChanges.Rout
+# cat NotifyVHIRJobs.Rout
+#
+## For cron jobs, add it for your user on a gnu/linux machine with something like:
+## Add to your user's crontab with 
+#
+# crontab -e
+#
+## Content to add (something like this for days from Mon to Friday at 10:05 a.m.):
+#
+## m h  dom mon dow   command
+#5 10 * * 1,2,3,4,5  cd /home/xavi/code/webchanges/;R CMD BATCH NotifyVHIRJobs.R

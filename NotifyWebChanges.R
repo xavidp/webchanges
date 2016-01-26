@@ -152,11 +152,12 @@ cat("\nEmail sent.\n ")
 # R CMD BATCH "/home/xavi/code/NotifyWebChanges/NotifyWebChanges.R"
 # cat NotifyWebChanges.Rout
 
+## For cron jobs, add it for your user on a gnu/linux machine with something like:
 ## Add to your user's crontab with 
 #
 # crontab -e
 #
-## Content to add (something like this for days from Mon to Friday at 2 p.m.):
+## Content to add (something like this for days from Mon to Friday at 10 a.m.):
 #
 ## m h  dom mon dow   command
-#0 14 * * 1,2,3,4,5  R CMD BATCH "/home/xavi/code/webchanges/NotifyWebChanges.R"
+#0 10 * * 1,2,3,4,5  cd /home/xavi/code/webchanges/;R CMD BATCH NotifyWebChanges.R
