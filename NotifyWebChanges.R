@@ -106,7 +106,7 @@ write.table(jobs.new, file.path(folder.txts, paste0(outFileName.new.noext, ".txt
 #from <- sprintf("<sendmailR@%s>", Sys.info()[4])
 from <- "xavier.depedro@vhir.org"
 to <- "xavier.depedro@vhir.org"
-#to <- "xdpedro@ir.vhebron.net"
+#to <- "xdpedro@ir.vhebron.net another@example.com athird@example.com"
   subject <- sprintf("[JOBS] BIOCAT: %s", Sys.Date()) 
   body <- "See the list of new jobs (since the last email) in the first attachment, and the full list of jobs in this website in the second attachment below."
   cc <- NULL 
@@ -135,7 +135,7 @@ attachmentPath.all <- file.path(getwd(), folder.txts, paste0(outFileName.all.noe
 #attachmentObject2 <- mime_part(x="subfolder/log2.txt",name="log2.txt")
 #bodyWithAttachment <- list(body,attachmentObject,attachmentObject2)
 
-command <- paste("sendEmail -f ", from, " -t ", to, " -u \"", subject,
+command <- paste("sendEmail -f ", from, " -t ", to, " -cc ", cc, " -bcc ", bcc, " -u \"", subject,
                  "\" -m \"", body, "\" -s ", smtp,
                  " -a \"", attachmentPath.new, "\" -a \"", attachmentPath.all,
                  "\" >> \"", attachmentPath.all, "\" ", " -o tls=no -o message-charset=utf-8 ", sep="");

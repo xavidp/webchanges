@@ -238,10 +238,10 @@ if (dim(jobs.changed.df)[1] > 0) {
   #from <- sprintf("<sendmailR@%s>", Sys.info()[4])
   from <- "xavier.depedro@vhir.org"
   to <- "ce.ofertes.treball@vhir.org"
-  #to <- "xdpedro@ir.vhebron.net"
+  #to <- "xdpedro@ir.vhebron.net another@example.com athird@example.com"
   subject <- sprintf("[JOBS] VHIR: %s", Sys.Date()) 
   body <- "See the list of new jobs (since the last email) in the first attachment, the list of changes in the colored html table in the second, and the full list of jobs in this website in plain text in the last attachment below."
-  cc <- NULL 
+  cc <- NULL #"xavier.depedro@vhir.org" #NULL 
   bcc <- "xavier.depedro@vhir.org" 
   headers <- NULL 
   smtp <- "smtp.ir.vhebron.net"
@@ -269,7 +269,7 @@ if (dim(jobs.changed.df)[1] > 0) {
   
   #bodyWithAttachment <- list(body,attachmentObject,attachmentObject2)
   
-  command <- paste("sendEmail -f ", from, " -t ", to, " -u \"", subject,
+  command <- paste("sendEmail -f ", from, " -t ", to, " -cc ", cc, " -bcc ", bcc, " -u \"", subject,
                    "\" -m \"", body, "\" -s ", smtp,
                    " -a \"", attachmentPath.new, "\" -a \"", attachmentPath.changed, "\" -a \"", attachmentPath.all,
                    "\" >> \"", attachmentPath.all, "\" ", " -o tls=no -o message-charset=utf-8 ", sep="");
