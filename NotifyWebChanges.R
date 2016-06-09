@@ -69,6 +69,12 @@ df2 <- data.frame(jobs.list.all)
 df2$link <- as.character(df2$link)
 
 if (length(all.equal(df1, df2))>0) {
+  #if df1 is missing (first time you run it), make a df1 like df2 but with empty values so that setdiff works
+  if (length(dim(df1)[0]) == 0) {
+    df1 <- df2[0,]
+    df1 <- data.frame(jobs.list.all.previous)
+    df1$link <- as.character(df1$link)
+  }
   # do something, like merging the A and B into AB, and removing B from AB, or similar
   jobs.new <- dplyr::setdiff(df2, df1)
   jobs.new <- data.table(jobs.new)
@@ -104,15 +110,15 @@ write.table(jobs.new, file.path(folder.txts, paste0(outFileName.new.noext, ".txt
 
 # Send email with list of jobs and their urls
 #from <- sprintf("<sendmailR@%s>", Sys.info()[4])
-from <- "xavier.depedro@vhir.org"
-to <- "xavier.depedro@vhir.org"
+from <- "xavi@confluencia.net"
+to <- "xavier.depedro@seeds4c.org"
 #to <- "xdpedro@ir.vhebron.net another@example.com athird@example.com"
   subject <- sprintf("[JOBS] BIOCAT: %s", Sys.Date()) 
   body <- "See the list of new jobs (since the last email) in the first attachment, and the full list of jobs in this website in the second attachment below."
   cc <- NULL 
   bcc <- NULL 
   headers <- NULL 
-  smtp <- "smtp.ir.vhebron.net"
+  smtp <- "" #"smtp.ir.vhebron.net"
 
   #control <- list(smtpServer="172.18.50.10", verboseShow=TRUE)
   #  control <- list(smtpServer="smtp.ir.vhebron.net", verboseShow=TRUE) # List of SMTP server settings. Valid values are the possible options for sendmail_options
@@ -136,9 +142,12 @@ attachmentPath.all <- file.path(getwd(), folder.txts, paste0(outFileName.all.noe
 #bodyWithAttachment <- list(body,attachmentObject,attachmentObject2)
 
 command <- paste("sendEmail -f ", from, " -t ", to, " -cc ", cc, " -bcc ", bcc, " -u \"", subject,
-                 "\" -m \"", body, "\" -s ", smtp,
-                 " -a \"", attachmentPath.new, "\" -a \"", attachmentPath.all,
+                 "\" -m \"", body, "
+                 \" -a \"", attachmentPath.new, "\" -a \"", attachmentPath.all,
                  "\" >> \"", attachmentPath.all, "\" ", " -o tls=no -o message-charset=utf-8 ", sep="");
+# Removed the smtp setting for the time being while working in localhost on a linux machine out of firewalls 
+#\" -s ", smtp,
+
 system(command);
 
 cat("\nEmail sent.\n ")   
